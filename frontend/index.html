@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>StadiumSentinel — AI Crowd Command Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<style>
+:root{--bg:#06080f;--panel:#0b0f1e;--border:#162035;--blue:#4285f4;--green:#34a853;--red:#ea4335;--amber:#fbbc04;--purple:#9c27b0;--text:#c8d6f0;--dim:#3d5270;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;height:100vh;overflow:hidden;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);}
+.mono{font-family:'JetBrains Mono',monospace;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;animation:pulse 1.5s infinite;}
+.pulse.green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.pulse.red{background:var(--red);box-shadow:0 0 8px var(--red);animation-duration:0.5s;}
+.pulse.amber{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.pulse.blue{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.7)}}
+.gate-bar-track{background:#0d1525;border-radius:2px;height:5px;width:100%;overflow:hidden;}
+.gate-bar-fill{height:100%;border-radius:2px;transition:width 1s ease,background 0.5s;}
+#thought-log{font-family:'JetBrains Mono',monospace;font-size:10.5px;}
+.thought-line{padding:2px 0 2px 8px;border-left:2px solid var(--dim);margin-bottom:3px;color:var(--dim);}
+.thought-line.active{border-color:var(--blue);color:#7aadff;}
+.thought-line.done{border-color:var(--green);color:#6ecc8c;}
+#response-area{font-size:13px;line-height:1.75;}
+.msg-user{color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:5px;}
+.msg-user::before{content:'> ';color:var(--blue);}
+.msg-agent{color:var(--text);margin-bottom:16px;}
+.msg-agent table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;}
+.msg-agent td,.msg-agent th{padding:4px 8px;border:1px solid var(--border);}
+.msg-agent th{background:#0d1525;color:var(--blue);}
+.alert-card{padding:9px 12px;border-left:3px solid;margin-bottom:7px;border-radius:0 3px 3px 0;animation:slideIn 0.3s ease;}
+.alert-card.critical{border-color:var(--red);background:rgba(234,67,53,0.08);}
+.alert-card.warning{border-color:var(--amber);background:rgba(251,188,4,0.08);}
+.alert-card.info{border-color:var(--blue);background:rgba(66,133,244,0.08);}
+@keyframes slideIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+#cmd-input{background:#080d1a;border:1px solid var(--border);color:var(--text);outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;}
+#cmd-input:focus{border-color:var(--blue);}
+#cmd-input::placeholder{color:var(--dim);}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.chip{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 7px;border-radius:2px;letter-spacing:0.06em;border:none;cursor:pointer;}
+.chip.critical{background:rgba(234,67,53,0.2);color:var(--red);}
+.chip.warning{background:rgba(251,188,4,0.15);color:var(--amber);}
+.chip.ok{background:rgba(52,168,83,0.15);color:var(--green);}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0}}
+/* Stadium SVG */
+.stadium-section{transition:fill 0.6s ease,opacity 0.3s;cursor:pointer;}
+.stadium-section:hover{opacity:0.8;stroke:#fff;stroke-width:1px;}
+/* Tabs */
+.tab-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;border-radius:2px;}
+.tab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+/* Select */
+select{background:#080d1a;border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 6px;border-radius:2px;outline:none;}
+select:focus{border-color:var(--blue);}
+/* Voice button */
+#voice-btn{transition:all 0.2s;}
+#voice-btn.speaking{background:rgba(234,67,53,0.3);border-color:var(--red);color:var(--red);}
+/* Stadium image */
+#stadium-img{object-fit:cover;width:100%;height:80px;border-radius:3px;opacity:0.7;}
+/* Upload zone */
+.upload-zone{border:1px dashed var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.2s;}
+.upload-zone:hover{border-color:var(--blue);}
+</style>
+</head>
+<body class="flex flex-col h-screen">
+
+<!-- TOP BAR -->
+<div class="flex items-center justify-between px-3 py-1.5 border-b" style="border-color:var(--border);background:#080d1a;min-height:42px;flex-shrink:0;">
+  <div class="flex items-center gap-3">
+    <span class="pulse green"></span>
+    <span class="mono text-sm font-bold" style="color:var(--blue);letter-spacing:0.12em;">STADIUM SENTINEL</span>
+    <span class="mono text-xs" style="color:var(--dim);">// AI CROWD COMMAND PLATFORM</span>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2">
+      <span class="text-xs" style="color:var(--dim);">STADIUM</span>
+      <select id="stadium-select" onchange="changeStadium(this.value)">
+        <option value="narendra_modi">Narendra Modi Stadium</option>
+        <option value="wankhede">Wankhede Stadium</option>
+        <option value="chinnaswamy">M. Chinnaswamy Stadium</option>
+        <option value="eden_gardens">Eden Gardens</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs" style="color:var(--dim);">EVENT</span>
+      <select id="event-select" onchange="changeEvent(this.value)">
+        <option value="ipl_final">IPL Final</option>
+        <option value="ipl_match">IPL Match</option>
+        <option value="world_cup">World Cup</option>
+        <option value="test_match">Test Match</option>
+        <option value="victory_parade" style="color:var(--red)">⚠ Victory Parade</option>
+        <option value="concert">Concert</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs" style="color:var(--dim);">CAP</span>
+      <span class="mono text-sm font-bold" id="hdr-capacity" style="color:var(--amber);">--</span>
+    </div>
+    <span class="chip" id="hdr-threat" style="background:rgba(52,168,83,0.15);color:var(--green);">LOW</span>
+    <button id="voice-btn" onclick="toggleVoice()" class="chip" style="background:rgba(66,133,244,0.15);color:var(--blue);border:1px solid var(--border);">🔊 VOICE</button>
+    <div class="flex items-center gap-1"><span class="pulse green" id="live-dot"></span><span class="mono text-xs" style="color:var(--dim);">LIVE</span></div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="flex flex-1 overflow-hidden gap-1.5 p-1.5">
+
+  <!-- LEFT PANEL -->
+  <div class="flex flex-col gap-1.5" style="width:210px;flex-shrink:0;">
+
+    <!-- Stadium Card -->
+    <div class="panel p-2" style="flex-shrink:0;">
+      <img id="stadium-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Narendra_Modi_Stadium.jpg/1280px-Narendra_Modi_Stadium.jpg" alt="Stadium"/>
+      <div class="mt-1.5">
+        <div class="mono text-xs font-bold" id="stadium-name" style="color:var(--text);">Narendra Modi Stadium</div>
+        <div class="mono text-xs" style="color:var(--dim);" id="stadium-city">Ahmedabad, Gujarat</div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="mono text-xs" style="color:var(--dim);">Capacity</span>
+          <span class="mono text-xs font-bold" id="stadium-capacity" style="color:var(--blue);">1,32,000</span>
+        </div>
+        <div id="event-badge" class="mt-1 chip ok" style="display:inline-block;">IPL 2026 FINAL · 31 MAY</div>
+      </div>
+    </div>
+
+    <!-- Stadium Layout Tabs -->
+    <div class="panel p-2 flex-1 overflow-hidden flex flex-col">
+      <div class="flex gap-1 mb-2">
+        <button class="tab-btn active" onclick="switchTab('layout',this)">LAYOUT</button>
+        <button class="tab-btn" onclick="switchTab('gates',this)">GATES</button>
+      </div>
+
+      <!-- Layout Tab -->
+      <div id="tab-layout" class="flex-1 overflow-hidden" style="display:block;">
+        <div class="mono text-xs mb-1" style="color:var(--dim);">OCCUPANCY HEATMAP</div>
+        <svg id="stadium-svg" viewBox="0 0 200 180" style="width:100%;height:auto;display:block;">
+          <!-- Outer oval -->
+          <ellipse cx="100" cy="90" rx="95" ry="80" fill="#0d1525" stroke="#162035" stroke-width="1.5"/>
+          <!-- Pitch (center) -->
+          <ellipse cx="100" cy="90" rx="18" ry="12" fill="#1a2a10" stroke="#2a4a20" stroke-width="1"/>
+          <text x="100" y="93" text-anchor="middle" style="font-size:5px;fill:#4a6a30;font-family:monospace;">PITCH</text>
+          <!-- Stadium sections — 8 colored segments -->
+          <path id="sec-N"  d="M100,10 A90,80 0 0,1 155,30 L130,55 A40,35 0 0,0 100,50 Z" class="stadium-section" onclick="sectionClick('North Stand')" fill="#1a3a10"/>
+          <path id="sec-NE" d="M155,30 A90,80 0 0,1 185,70 L155,78 A40,35 0 0,0 130,55 Z" class="stadium-section" onclick="sectionClick('North East Stand')" fill="#1a3a10"/>
+          <path id="sec-E"  d="M185,70 A90,80 0 0,1 185,110 L155,103 A40,35 0 0,0 155,78 Z" class="stadium-section" onclick="sectionClick('East VIP Pavilion')" fill="#2a5c1a"/>
+          <path id="sec-SE" d="M185,110 A90,80 0 0,1 155,150 L130,126 A40,35 0 0,0 155,103 Z" class="stadium-section" onclick="sectionClick('South East Stand')" fill="#4a8a1a"/>
+          <path id="sec-S"  d="M155,150 A90,80 0 0,1 100,168 L100,130 A40,35 0 0,0 130,126 Z" class="stadium-section" onclick="sectionClick('South Stand')" fill="#fbbc04" style="fill-opacity:0.7"/>
+          <path id="sec-SW" d="M100,168 A90,80 0 0,1 45,150 L70,126 A40,35 0 0,0 100,130 Z" class="stadium-section" onclick="sectionClick('South West Stand')" fill="#ea4335" style="fill-opacity:0.8"/>
+          <path id="sec-W"  d="M45,150 A90,80 0 0,1 15,110 L45,103 A40,35 0 0,0 70,126 Z" class="stadium-section" onclick="sectionClick('West VIP Pavilion')" fill="#2a5c1a"/>
+          <path id="sec-NW" d="M15,110 A90,80 0 0,1 45,30 L70,55 A40,35 0 0,0 45,103 Z" class="stadium-section" onclick="sectionClick('North West Stand')" fill="#1a3a10"/>
+          <!-- Gate labels -->
+          <text x="100" y="8" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G4</text>
+          <text x="162" y="25" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G3</text>
+          <text x="192" y="90" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G2</text>
+          <text x="162" y="158" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G10</text>
+          <text x="100" y="176" text-anchor="middle" style="font-size:5.5px;fill:#ea4335;font-family:monospace;font-weight:bold;">G9 ▲</text>
+          <text x="38" y="158" text-anchor="middle" style="font-size:5.5px;fill:#ea4335;font-family:monospace;font-weight:bold;">G8!</text>
+          <text x="8" y="90" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G7</text>
+          <text x="38" y="25" text-anchor="middle" style="font-size:5.5px;fill:#4a6a80;font-family:monospace;">G5</text>
+        </svg>
+        <!-- Legend -->
+        <div class="flex justify-between items-center mt-1">
+          <span class="mono text-xs" style="color:var(--dim);font-size:9px;">LOW</span>
+          <div class="flex gap-0.5">
+            <div style="width:10px;height:8px;background:#1a3a10;border-radius:1px;"></div>
+            <div style="width:10px;height:8px;background:#2a6a10;border-radius:1px;"></div>
+            <div style="width:10px;height:8px;background:#7aad1a;border-radius:1px;"></div>
+            <div style="width:10px;height:8px;background:#fbbc04;border-radius:1px;"></div>
+            <div style="width:10px;height:8px;background:#ea4335;border-radius:1px;"></div>
+          </div>
+          <span class="mono text-xs" style="color:var(--dim);font-size:9px;">HIGH</span>
+        </div>
+        <div id="section-tooltip" class="mono text-xs mt-1" style="color:var(--blue);min-height:14px;"></div>
+      </div>
+
+      <!-- Gates Tab -->
+      <div id="tab-gates" class="flex-1 overflow-y-auto" style="display:none;">
+        <div id="gate-list" class="flex flex-col gap-1.5 pr-1"></div>
+      </div>
+    </div>
+
+    <!-- Agent Status -->
+    <div class="panel p-2" style="flex-shrink:0;">
+      <div class="mono text-xs mb-1.5" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">AGENT STATUS</div>
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center justify-between"><span class="mono text-xs" style="font-size:10px;">CrowdFlow</span><span class="pulse green" id="ag-crowd"></span></div>
+        <div class="flex items-center justify-between"><span class="mono text-xs" style="font-size:10px;">Security</span><span class="pulse green" id="ag-security"></span></div>
+        <div class="flex items-center justify-between"><span class="mono text-xs" style="font-size:10px;">Emergency</span><span class="pulse green" id="ag-emergency"></span></div>
+        <div class="flex items-center justify-between"><span class="mono text-xs" style="font-size:10px;">Monitor</span><span class="pulse blue" id="ag-monitor"></span></div>
+        <div class="flex items-center justify-between"><span class="mono text-xs" style="font-size:10px;">Model Armor</span><span class="mono text-xs" style="color:var(--green);font-size:9px;">ACTIVE</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="flex flex-col flex-1 gap-1.5 min-w-0">
+
+    <!-- Thought Process Log -->
+    <div class="panel p-2" style="height:130px;flex-shrink:0;">
+      <div class="flex items-center justify-between mb-1">
+        <span class="mono text-xs" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">AGENT THOUGHT PROCESS — GOOGLE ADK 2.0</span>
+        <span class="mono text-xs blink" id="thinking-indicator" style="color:var(--blue);display:none;font-size:10px;">PROCESSING_</span>
+      </div>
+      <div id="thought-log" class="overflow-y-auto pr-1" style="height:96px;"></div>
+    </div>
+
+    <!-- Response Area -->
+    <div class="panel p-2 flex-1 overflow-y-auto" style="min-height:0;">
+      <div class="mono text-xs mb-2" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">COMMAND CENTER — AI RESPONSE</div>
+      <div id="response-area"></div>
+    </div>
+
+    <!-- Input + Image Upload -->
+    <div class="panel" style="flex-shrink:0;">
+      <!-- Quick scenarios -->
+      <div class="flex gap-1 px-2 pt-2 flex-wrap">
+        <span class="mono text-xs" style="color:var(--dim);font-size:9px;">SCENARIOS:</span>
+        <button onclick="quickSend('Gate G4 is overflowing — rain starting in 20 minutes. Emergency protocol?')" class="chip ok">Surge+Rain</button>
+        <button onclick="quickSend('Check suspicious ticket anomalies near North Stand')" class="chip ok">Ticket Scan</button>
+        <button onclick="quickSend('Current stadium capacity and highest risk gate?')" class="chip ok">Status</button>
+        <button onclick="quickSend('Victory parade after match — how do we prevent a Chinnaswamy-style stampede?')" class="chip critical">⚠ Victory Parade</button>
+        <button onclick="quickSend('Fire alarm triggered in East Pavilion — evacuate')" class="chip warning">Fire</button>
+        <button onclick="quickSend('What is the crowd management plan for 31 May 2026 IPL Final at Narendra Modi Stadium?')" class="chip ok">NM Stadium Plan</button>
+      </div>
+      <!-- Text input -->
+      <div class="flex items-center gap-2 p-2">
+        <span class="mono text-xs" style="color:var(--blue);">OPS &gt;</span>
+        <input id="cmd-input" type="text" placeholder="Describe situation or ask for protocol..." class="flex-1 px-2 py-1 rounded" autocomplete="off"/>
+        <!-- Image upload -->
+        <label class="chip" style="background:rgba(156,39,176,0.15);color:#ce93d8;border:1px solid var(--border);cursor:pointer;" title="Upload crowd image for AI analysis">
+          📷
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event)"/>
+        </label>
+        <button id="send-btn" onclick="sendMessage()" class="chip ok" style="padding:4px 14px;">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="flex flex-col gap-1.5" style="width:245px;flex-shrink:0;">
+
+    <!-- Live Alerts -->
+    <div class="panel p-2 flex-1 overflow-y-auto" style="min-height:0;">
+      <div class="flex items-center justify-between mb-2">
+        <span class="mono text-xs" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">LIVE ALERTS</span>
+        <span class="mono text-xs" id="alert-count" style="color:var(--blue);font-size:9px;">0 ACTIVE</span>
+      </div>
+      <div id="alert-list"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="panel p-2" style="flex-shrink:0;">
+      <div class="mono text-xs mb-1.5" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">SESSION STATS</div>
+      <div class="grid grid-cols-2 gap-1">
+        <div><div class="text-xs" style="color:var(--dim);font-size:9px;">Queries</div><div class="mono text-sm font-bold" id="stat-queries">0</div></div>
+        <div><div class="text-xs" style="color:var(--dim);font-size:9px;">Alerts fired</div><div class="mono text-sm font-bold" id="stat-alerts">0</div></div>
+        <div><div class="text-xs" style="color:var(--dim);font-size:9px;">Agents invoked</div><div class="mono text-sm font-bold" id="stat-agents">0</div></div>
+        <div><div class="text-xs" style="color:var(--dim);font-size:9px;">Threats blocked</div><div class="mono text-sm font-bold" id="stat-blocked" style="color:var(--red);">0</div></div>
+      </div>
+    </div>
+
+    <!-- Voice Status -->
+    <div class="panel p-2" style="flex-shrink:0;">
+      <div class="mono text-xs mb-1.5" style="color:var(--dim);letter-spacing:0.1em;font-size:9px;">VOICE BROADCAST</div>
+      <div id="voice-status" class="mono text-xs" style="color:var(--dim);font-size:10px;">Voice alerts: OFF</div>
+      <div id="voice-text" class="text-xs mt-1" style="color:var(--text);opacity:0.7;font-size:10px;min-height:28px;line-height:1.4;"></div>
+    </div>
+
+    <!-- Celebration Risk Warning -->
+    <div id="celebration-warning" class="panel p-2" style="flex-shrink:0;border-color:rgba(234,67,53,0.3);display:none;">
+      <div class="mono text-xs font-bold mb-1" style="color:var(--red);font-size:9px;">⚠ CELEBRATION RISK MODE</div>
+      <div class="text-xs" style="color:var(--text);opacity:0.8;font-size:10px;line-height:1.4;">Chinnaswamy 2024 protocols active. Zone routing and PA cycle mandatory.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2,10);
+let alertCount=0, queryCount=0, agentCount=0, blockedCount=0;
+let voiceEnabled=false, isSpeaking=false;
+let currentStadium='narendra_modi', currentEvent='ipl_final';
+
+const STADIUM_IMAGES = {
+  narendra_modi: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Narendra_Modi_Stadium.jpg/1280px-Narendra_Modi_Stadium.jpg',
+  wankhede: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Wankhede_stadium.jpg/1280px-Wankhede_stadium.jpg',
+  chinnaswamy: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/M._Chinnaswamy_Stadium.jpg/1280px-M._Chinnaswamy_Stadium.jpg',
+  eden_gardens: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Eden_Gardens_Cricket_Stadium.jpg/1280px-Eden_Gardens_Cricket_Stadium.jpg',
+};
+const STADIUM_INFO = {
+  narendra_modi: {name:'Narendra Modi Stadium', city:'Ahmedabad, Gujarat', cap:'1,32,000', badge:'IPL 2026 FINAL · 31 MAY'},
+  wankhede:      {name:'Wankhede Stadium', city:'Mumbai, Maharashtra', cap:'33,108', badge:'MI vs CSK'},
+  chinnaswamy:   {name:'M. Chinnaswamy Stadium', city:'Bengaluru, Karnataka', cap:'38,000', badge:'RCB HOME'},
+  eden_gardens:  {name:'Eden Gardens', city:'Kolkata, West Bengal', cap:'66,000', badge:'KKR HOME'},
+};
+
+// ─── STADIUM CHANGE ───────────────────────────────────────────
+function changeStadium(id) {
+  currentStadium = id;
+  const info = STADIUM_INFO[id];
+  document.getElementById('stadium-name').textContent = info.name;
+  document.getElementById('stadium-city').textContent = info.city;
+  document.getElementById('stadium-capacity').textContent = info.cap;
+  document.getElementById('event-badge').textContent = info.badge;
+  document.getElementById('stadium-img').src = STADIUM_IMAGES[id];
+  addThought(`Stadium changed to ${info.name}`, 'done');
+  if(id === 'chinnaswamy') speak('Chinnaswamy Stadium selected. Victory parade risk protocols available.');
+}
+
+function changeEvent(type) {
+  currentEvent = type;
+  const warning = document.getElementById('celebration-warning');
+  if(type === 'victory_parade') {
+    warning.style.display = 'block';
+    addThought('EXTREME RISK: Victory Parade mode active — Chinnaswamy protocols loaded', 'active');
+    speak('Warning. Victory parade event selected. Extreme risk protocols activated. Chinnaswamy 2024 incident prevention measures are now active.');
+  } else {
+    warning.style.display = 'none';
+  }
+}
+
+// ─── STATUS POLLING ───────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const r = await fetch(`/api/status?stadium_id=${currentStadium}`);
+    const d = await r.json();
+    document.getElementById('hdr-capacity').textContent = d.capacity_pct + '%';
+    const threat = (d.threat_level||'low').toUpperCase();
+    const el = document.getElementById('hdr-threat');
+    el.textContent = threat;
+    el.style.background = threat==='HIGH'?'rgba(234,67,53,0.2)':threat==='MEDIUM'?'rgba(251,188,4,0.15)':'rgba(52,168,83,0.15)';
+    el.style.color = threat==='HIGH'?'var(--red)':threat==='MEDIUM'?'var(--amber)':'var(--green)';
+    renderGates(d.gates||{});
+    updateStadiumSVG(d.gates||{});
+  } catch(e){}
+}
+
+function renderGates(gates) {
+  const el = document.getElementById('gate-list');
+  el.innerHTML = '';
+  Object.entries(gates).forEach(([g,pct]) => {
+    const color = pct>85?'var(--red)':pct>65?'var(--amber)':'var(--green)';
+    el.innerHTML += `<div>
+      <div class="flex justify-between mb-0.5">
+        <span class="mono" style="font-size:10px;">${g}</span>
+        <span class="mono" style="font-size:10px;color:${color}">${pct}%</span>
+      </div>
+      <div class="gate-bar-track"><div class="gate-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  });
+}
+
+function updateStadiumSVG(gates) {
+  const vals = Object.values(gates);
+  const secs = ['sec-N','sec-NE','sec-E','sec-SE','sec-S','sec-SW','sec-W','sec-NW'];
+  secs.forEach((id, i) => {
+    const v = vals[i] || 40;
+    const el = document.getElementById(id);
+    if(!el) return;
+    const fill = v>85?'#5a1010':v>70?'#5a4000':v>50?'#2a6010':'#1a3a10';
+    const opacity = 0.5 + (v/100)*0.5;
+    el.style.fill = fill;
+    el.style.fillOpacity = opacity;
+  });
+}
+
+function sectionClick(name) {
+  document.getElementById('section-tooltip').textContent = '▶ ' + name;
+  quickSend(`What is the crowd status in ${name}?`);
+}
+
+function switchTab(tab, btn) {
+  document.getElementById('tab-layout').style.display = tab==='layout'?'block':'none';
+  document.getElementById('tab-gates').style.display = tab==='gates'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── ALERT STREAM ─────────────────────────────────────────────
+function initAlertStream() {
+  const es = new EventSource('/api/alerts/stream');
+  es.onmessage = e => {
+    try { const d=JSON.parse(e.data); if(d.type!=='heartbeat') pushAlert(d); } catch(e){}
+  };
+  es.onerror = () => setTimeout(initAlertStream, 3000);
+}
+
+function pushAlert(d) {
+  alertCount++;
+  document.getElementById('stat-alerts').textContent = alertCount;
+  document.getElementById('alert-count').textContent = alertCount + ' ACTIVE';
+  const sev = d.severity||'info';
+  const icon = sev==='critical'?'🔴':sev==='warning'?'🟡':'🔵';
+  const ts = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const card = document.createElement('div');
+  card.className = `alert-card ${sev}`;
+  card.innerHTML = `
+    <div class="flex items-center justify-between mb-1">
+      <span class="mono font-bold" style="font-size:10px;">${icon} ${(d.title||'Alert').toUpperCase()}</span>
+      <span class="mono" style="font-size:9px;color:var(--dim)">${ts}</span>
+    </div>
+    <div style="font-size:11px;color:var(--text);opacity:0.85;line-height:1.4">${d.message||''}</div>
+    ${d.auto_response?'<div class="mono" style="font-size:9px;color:var(--blue);margin-top:3px;">⚡ AUTO-RESPONSE TRIGGERED</div>':''}
+  `;
+  const list = document.getElementById('alert-list');
+  list.insertBefore(card, list.firstChild);
+  while(list.children.length>15) list.removeChild(list.lastChild);
+  const dot = document.getElementById('live-dot');
+  dot.className='pulse red';
+  setTimeout(()=>dot.className='pulse green',2000);
+  if(voiceEnabled && sev==='critical') {
+    speak(d.title + '. ' + d.message);
+  }
+}
+
+// ─── VOICE ────────────────────────────────────────────────────
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById('voice-btn');
+  const status = document.getElementById('voice-status');
+  if(voiceEnabled) {
+    btn.classList.add('speaking');
+    btn.textContent = '🔊 VOICE ON';
+    status.textContent = 'Voice alerts: ON';
+    status.style.color = 'var(--green)';
+    speak('Stadium Sentinel voice alerts enabled. Critical incidents will be announced.');
+  } else {
+    speechSynthesis.cancel();
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊 VOICE';
+    status.textContent = 'Voice alerts: OFF';
+    status.style.color = 'var(--dim)';
+    document.getElementById('voice-text').textContent = '';
+  }
+}
+
+function speak(text) {
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const clean = text.replace(/[*#|>\[\]]/g,'').replace(/\n/g,'. ').slice(0,300);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.rate = 0.95; utt.pitch = 1; utt.volume = 1;
+  const voices = speechSynthesis.getVoices();
+  const eng = voices.find(v=>v.lang.startsWith('en')&&v.name.includes('Google')) || voices.find(v=>v.lang.startsWith('en'));
+  if(eng) utt.voice = eng;
+  document.getElementById('voice-text').textContent = '🔊 ' + clean.slice(0,80) + (clean.length>80?'...':'');
+  speechSynthesis.speak(utt);
+}
+
+// ─── IMAGE UPLOAD ─────────────────────────────────────────────
+async function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const area = document.getElementById('response-area');
+  addMessage('user', `[Image uploaded: ${file.name}] — Analyzing crowd conditions...`);
+  document.getElementById('thinking-indicator').style.display='flex';
+  addThought('Image received — Gemini Vision analysis in progress...','active');
+  addThought('Crowd density estimation, bottleneck detection...','active');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('stadium_id', currentStadium);
+  formData.append('session_id', SESSION_ID);
+
+  try {
+    const r = await fetch('/api/analyze-image', {method:'POST', body:formData});
+    const d = await r.json();
+    const div = document.createElement('div');
+    div.className = 'msg-agent';
+    div.innerHTML = DOMPurify.sanitize(marked.parse(d.analysis));
+    area.appendChild(div);
+    area.scrollTop = 9999;
+    addThought('Image analysis complete', 'done');
+    if(voiceEnabled) speak('Image analysis complete. ' + d.analysis.slice(0,150));
+  } catch(e) {
+    const div = document.createElement('div');
+    div.className='msg-agent';
+    div.innerHTML='<span style="color:var(--red)">Image analysis failed — check server logs.</span>';
+    area.appendChild(div);
+  } finally {
+    document.getElementById('thinking-indicator').style.display='none';
+  }
+}
+
+// ─── CHAT ─────────────────────────────────────────────────────
+function addThought(text, state='active') {
+  const log = document.getElementById('thought-log');
+  const line = document.createElement('div');
+  line.className=`thought-line ${state}`;
+  line.textContent=`[${new Date().toLocaleTimeString('en-IN')}] ${text}`;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+  return line;
+}
+
+function addMessage(role, text) {
+  const area = document.getElementById('response-area');
+  if(role==='user') {
+    area.innerHTML+=`<div class="msg-user">${escHtml(text)}</div>`;
+  } else {
+    const div=document.createElement('div');
+    div.className='msg-agent';
+    area.appendChild(div);
+    area.scrollTop=9999;
+    return div;
+  }
+  area.scrollTop=9999;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('cmd-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value='';
+  queryCount++;
+  document.getElementById('stat-queries').textContent=queryCount;
+  addMessage('user', msg);
+  document.getElementById('thought-log').innerHTML='';
+  document.getElementById('thinking-indicator').style.display='flex';
+  const responseDiv=document.createElement('div');
+  responseDiv.className='msg-agent';
+  document.getElementById('response-area').appendChild(responseDiv);
+  document.getElementById('response-area').scrollTop=9999;
+  const sendBtn=document.getElementById('send-btn');
+  sendBtn.disabled=true; sendBtn.textContent='...';
+
+  // Activate relevant agent indicators
+  const msgL = msg.toLowerCase();
+  if(msgL.includes('crowd')||msgL.includes('gate')) flashAgent('ag-crowd');
+  if(msgL.includes('ticket')||msgL.includes('security')) flashAgent('ag-security');
+  if(msgL.includes('emergency')||msgL.includes('rain')||msgL.includes('celebrat')) flashAgent('ag-emergency');
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:msg, session_id:SESSION_ID, stadium_id:currentStadium, event_type:currentEvent}),
+    });
+    const reader=resp.body.getReader();
+    const decoder=new TextDecoder();
+    let buf='', fullText='';
+    while(true) {
+      const {done,value}=await reader.read();
+      if(done) break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n');
+      buf=lines.pop();
+      for(const line of lines) {
+        if(!line.startsWith('data:')) continue;
+        try {
+          const d=JSON.parse(line.slice(5).trim());
+          if(d.type==='thought') {
+            addThought(d.text,'active');
+            agentCount++;
+            document.getElementById('stat-agents').textContent=agentCount;
+          } else if(d.type==='token') {
+            fullText+=d.text;
+            responseDiv.innerHTML=DOMPurify.sanitize(marked.parse(fullText));
+            document.getElementById('response-area').scrollTop=9999;
+          } else if(d.type==='blocked') {
+            blockedCount++;
+            document.getElementById('stat-blocked').textContent=blockedCount;
+            responseDiv.innerHTML=`<span style="color:var(--red)">⛔ ${escHtml(d.text)}</span>`;
+            addThought('Model Armor: input blocked','done');
+          } else if(d.type==='done') {
+            addThought('Response complete','done');
+            if(voiceEnabled && fullText) {
+              const lines=fullText.split('\n').filter(l=>l&&!l.startsWith('|')&&!l.startsWith('#')).slice(0,3).join('. ');
+              speak(lines);
+            }
+          }
+        } catch(e){}
+      }
+    }
+  } catch(e) {
+    responseDiv.innerHTML=`<span style="color:var(--red)">Connection error: ${e.message}</span>`;
+  } finally {
+    document.getElementById('thinking-indicator').style.display='none';
+    sendBtn.disabled=false; sendBtn.textContent='SEND';
+  }
+}
+
+function flashAgent(id) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.className='pulse red';
+  setTimeout(()=>el.className='pulse green',3000);
+}
+
+function quickSend(msg) {
+  document.getElementById('cmd-input').value=msg;
+  sendMessage();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('cmd-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
+
+// ─── INIT ─────────────────────────────────────────────────────
+window.onload=()=>{
+  speechSynthesis.getVoices();
+  pollStatus();
+  setInterval(pollStatus,5000);
+  initAlertStream();
+  addThought('StadiumSentinel online — Google ADK 2.0 agents initialized','done');
+  addThought('Default: Narendra Modi Stadium · IPL 2026 Final · 31 May 2026','done');
+  addThought('Chinnaswamy incident prevention protocols loaded','done');
+  addThought('Proactive monitor loop active — 30s polling cycle','done');
+  addThought('Model Armor input screening: ACTIVE','done');
+};
+</script>
+</body>
+</html>

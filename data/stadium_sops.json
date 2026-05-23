@@ -1,0 +1,44 @@
+[
+  {
+    "id": "sop-001",
+    "title": "Crowd Surge Protocol",
+    "category": "crowd_management",
+    "content": "CROWD SURGE SOP: 1) Immediately activate overflow gates G9 and G10. 2) Deploy crowd management stewards (minimum 4) to the affected gate. 3) Broadcast PA: 'Attention fans, please use alternate gates G9 and G10 for faster entry.' 4) Alert medical team to standby at gate. 5) Notify local police control room if queue exceeds 200 persons. 6) Update digital signage to show alternate routes. 7) Log incident timestamp in STADIUM-OPS system.",
+    "tags": ["crowd", "surge", "gate", "overflow", "queue"]
+  },
+  {
+    "id": "sop-002",
+    "title": "Wet Weather Operations",
+    "category": "weather",
+    "content": "WET WEATHER SOP: 1) Open all covered concourse routes — activate tunnel lighting. 2) Issue PA advisory: 'Caution: wet surfaces. Please use covered walkways.' 3) Deploy extra stewards at all ramp access points and staircases. 4) Pause all open-air food vendor operations. 5) Ensure all drainage channels are clear. 6) Notify groundskeeping team for pitch cover deployment. 7) Update crowd routing to prioritize dry routes.",
+    "tags": ["rain", "weather", "wet", "slippery", "covered"]
+  },
+  {
+    "id": "sop-003",
+    "title": "Security Threat Response",
+    "category": "security",
+    "content": "SECURITY THREAT SOP: 1) Isolate the flagged sector — do not create panic. 2) Alert stadium security chief via radio channel 4 (NOT public PA). 3) Notify local police control room — use priority line. 4) Initiate secondary bag check at nearest gate entry. 5) Deploy plainclothes security to the flagged zone. 6) Document incident ID, timestamp, location in security log. 7) Coordinate with BCCI security liaison if threat level HIGH.",
+    "tags": ["security", "threat", "suspicious", "ticket", "fraud", "anomaly"]
+  },
+  {
+    "id": "sop-004",
+    "title": "Fire Emergency Evacuation",
+    "category": "emergency",
+    "content": "FIRE EMERGENCY SOP: 1) Trigger zone evacuation alarm immediately. 2) Broadcast PA: 'Attention: Please evacuate via your nearest exit calmly. Do not use elevators.' 3) Match officials to be informed — suspend play. 4) Fire marshal to coordinate with BFES response team at Gate 1 service road. 5) Medical team to triage point at North car park. 6) Ensure all exit doors are unlocked and stewards posted. 7) Do NOT re-enter zone until all-clear from fire marshal.",
+    "tags": ["fire", "evacuation", "emergency", "exit", "alarm"]
+  },
+  {
+    "id": "sop-005",
+    "title": "Medical Emergency Response",
+    "category": "medical",
+    "content": "MEDICAL EMERGENCY SOP: 1) Dispatch nearest medical team to reported location. 2) Clear minimum 10-meter radius — instruct bystanders to step back. 3) Request AED unit from nearest first aid post (G1, G5, G9). 4) Do NOT move patient unless there is immediate physical hazard. 5) Coordinate ambulance access via Gate 1 service road — keep lane clear. 6) Assign steward to guide ambulance from Gate 1. 7) Notify match officials if incident is in seating bowl.",
+    "tags": ["medical", "emergency", "ambulance", "first aid", "AED", "injury"]
+  },
+  {
+    "id": "sop-006",
+    "title": "Post-Match Crowd Dispersal",
+    "category": "crowd_management",
+    "content": "POST-MATCH DISPERSAL SOP: 1) Begin phased dispersal by zone — VIP first, then stands in sequence N-S-E-W. 2) Hold all fans 5 minutes post-match for safety buffer. 3) Coordinate with local police for road traffic management. 4) Open all 10 gates simultaneously — do not funnel. 5) Deploy transport marshals to direct fans to nearest metro/bus stops. 6) Maintain PA updates every 3 minutes during dispersal. 7) Close stadium only after steward sweep confirms all clear.",
+    "tags": ["post-match", "dispersal", "exit", "crowd", "routing"]
+  }
+]
