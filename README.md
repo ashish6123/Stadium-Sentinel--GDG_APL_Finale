@@ -177,7 +177,7 @@ stadium-sentinel/
 ## Local Setup
 
 ```bash
-git clone https://github.com/ashish6123/stadium-sentinel
+git clone https://github.com/ashish6123/Stadium-Sentinel--GDG_APL_Finale
 cd stadium-sentinel
 python -m venv .venv
 .venv\Scripts\activate        # Windows
