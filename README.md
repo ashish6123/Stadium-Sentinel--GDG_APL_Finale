@@ -1,6 +1,6 @@
 # StadiumSentinel — AI Crowd Command Platform
 
-> **"On 18 May 2024, 70 people were injured outside Chinnaswamy Stadium because nobody had a system that could say — in real time — where the crowd was building and what to do about it. StadiumSentinel is that system."**
+> **"In May 2025, 70 people were injured outside Chinnaswamy Stadium because nobody had a system that could say — in real time — where the crowd was building and what to do about it. StadiumSentinel is that system."**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Cloud%20Run-4285F4?style=for-the-badge&logo=google-cloud)](https://stadium-sentinel-93223261212.us-central1.run.app)
 [![Google ADK](https://img.shields.io/badge/Google%20ADK-2.0-34A853?style=for-the-badge)](https://google.github.io/adk-docs/)
